@@ -1,26 +1,29 @@
 package server
 
 import (
-	"fmt"
-	"strconv"
+	"github.com/juju/errors"
 	"strings"
 	"time"
-	"errors"
 )
 
 type Session struct {
 	ID       int    `xorm:"id"`
 	SymbolID int    `xorm:"symbol_id"`
-	Symbol   string `xorm:"symbol"`
-	Type     string `xorm:"type"`
-	Weekday  string `xorm:"weekday"`
+	Type     SessionType `xorm:"type"`
+	Weekday  time.Weekday `xorm:"weekday"`
 	TimeSpan string `xorm:"time_span"`
 }
 
-func NewSession(SymbolID int, Symbol, Type, Weekday, TimeSpan string) *Session {
+type SessionType int
+
+const (
+	Quote SessionType = iota
+	Trade
+)
+
+func NewSession(SymbolID int, Type SessionType, Weekday time.Weekday, TimeSpan string) *Session {
 	return &Session{
 		SymbolID: SymbolID,
-		Symbol:   Symbol,
 		Type:     Type,
 		Weekday:  Weekday,
 		TimeSpan: TimeSpan,
@@ -32,9 +35,9 @@ type SessionRepository interface {
 	GetByName(symbolName string) (sess []*Session, err error)
 	GetByID(symbolID int) (sess []*Session, err error)
 	UpdateByID(sessionID int, sess *Session) error
-	DeleteByID(sessionID int) error
+	DeleteByID(sessionID int) (int64, error)
 	ValidSessionID(sessionID int) (valid bool, err error)
-	GetSymbolIDBySessionID(sessionID int) (symbolID int, err error)
+	GetSymbolIDBySessionID(sessionID int) (symbolID int, exist bool, err error)
 }
 
 type sessionOperator struct {
@@ -57,21 +60,22 @@ func InitSessionOperator(sessionRepo SessionRepository) *sessionOperator {
 }
 
 func sessionFormatCheck(sess *Session) error {
-	valid, err := GetSymbolOperator().ValidSymbolNameID(sess.Symbol, sess.SymbolID)
+	valid, err := GetSymbolOperator().ValidSymbolID(sess.SymbolID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid symbol id: %d or symbol name: %s", sess.SymbolID, sess.Symbol))
+		return errors.NotFoundf("symbol id %d", sess.SymbolID)
 	}
 
-	if sess.Type != "quote" && sess.Type != "trade" {
-		return errors.New(fmt.Sprintf("invalid session type: %s", sess.Type))
+	if sess.Type != Quote && sess.Type != Trade {
+		return errors.NotValidf("type %s", sess.Type)
 	}
 
-	if sess.Weekday != "0" && sess.Weekday != "1" && sess.Weekday != "2" && sess.Weekday != "3" &&
-		sess.Weekday != "4" && sess.Weekday != "5" && sess.Weekday != "6" {
-		return errors.New(fmt.Sprintf("invalid session weekday: %s", sess.Weekday))
+	if sess.Weekday != time.Sunday && sess.Weekday != time.Monday && sess.Weekday != time.Tuesday && sess.Weekday != time.Wednesday &&
+		sess.Weekday != time.Tuesday && sess.Weekday != time.Friday && sess.Weekday != time.Friday {
+		return errors.NotValidf("weekday %s", sess.Weekday)
 	}
 
 	// TODO sess.TimeSpan check
@@ -79,25 +83,18 @@ func sessionFormatCheck(sess *Session) error {
 }
 
 func (so *sessionOperator) InsertSessions(sess ...*Session) error {
-	for i := range sess {
-		if err := sessionFormatCheck(sess[i]); err != nil {
-			return err
-		}
-	}
+	//for i := range sess {
+	//	if err := sessionFormatCheck(sess[i]); err != nil {
+	//		return errors.NewNotValid(err, "validation session")
+	//	}
+	//}
 
 	err := so.sessionRepo.Insert(sess...)
 	if err != nil {
-		return err
+		return errors.Annotatef(err, "sql exec")
 	}
 
-	// update cache.
-	symbolName := sess[0].Symbol
-	deleteSymbolCacheByName(symbolName)
-	symbol := GetSymbolOperator().GetSymbolInfoByName(symbolName)
-	if symbol == nil {
-		return errors.New("update symbol cache failed by name")
-	}
-	insertSymbolToCache(symbol)
+	// delete cache to re-cache.
 
 	return nil
 }
@@ -112,73 +109,63 @@ func (so *sessionOperator) GetSessionsByID(symbolID int) (sess []*Session, err e
 
 func (so *sessionOperator) UpdateSessionByID(sessionID int, sess *Session) error {
 	if err := sessionFormatCheck(sess); err != nil {
-		return err
+		return errors.NewNotValid(err, "validation session")
 	}
 
 	valid, err := so.sessionRepo.ValidSessionID(sessionID)
 	if err != nil {
-		return err
+		return errors.Annotatef(err, "sql exec")
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid session id: %d", sessionID))
+		return errors.NotValidf("session id %d", sessionID)
 	}
 
 	err = so.sessionRepo.UpdateByID(sessionID, sess)
 	if err != nil {
-		return err
+		return errors.Annotatef(err, "sql exec")
 	}
 
-	// update cache.
-	symbolName := sess.Symbol
-	deleteSymbolCacheByName(symbolName)
-	symbol := GetSymbolOperator().GetSymbolInfoByName(symbolName)
-	if symbol == nil {
-		return errors.New("get symbol info failed by name, when UpdateSessionByID()")
-	}
-	insertSymbolToCache(symbol)
+	// delete cache to re-cache.
 
 	return nil
 }
 
 func (so *sessionOperator) DeleteSessionByID(sessionID int) error {
-	symbolID, err := so.sessionRepo.GetSymbolIDBySessionID(sessionID)
+	_, exist, err := so.sessionRepo.GetSymbolIDBySessionID(sessionID)
 	if err != nil {
-		return err
+		return errors.Annotatef(err, "sql exec")
 	}
 
-	err = so.sessionRepo.DeleteByID(sessionID)
-	if err != nil {
-		return err
+	if !exist {
+		return errors.NotFoundf("session id %d", sessionID)
 	}
 
-	// update cache.
-	deleteSymbolCacheByID(symbolID)
-	symbol := GetSymbolOperator().GetSymbolInfoByID(symbolID)
-	if symbol == nil {
-		return errors.New("get symbol info failed by id, when DeleteSessionByID()")
+	hit, err := so.sessionRepo.DeleteByID(sessionID)
+	if err != nil {
+		return errors.Annotatef(err, "sql exec")
 	}
-	insertSymbolToCache(symbol)
+
+	if hit == 0 {
+		return errors.NotFoundf("session id %d", sessionID)
+	}
+
+	// delete cache to re-cache.
 
 	return nil
 }
 
 // encode or decode session.
-func EncodeSession(sess []*Session) (qt map[string]map[time.Weekday]string, err error) {
-	qt = map[string]map[time.Weekday]string{
-		"quote": map[time.Weekday]string{time.Saturday: "", time.Sunday: ""},
-		"trade": map[time.Weekday]string{time.Saturday: "", time.Sunday: ""},
+func EncodeSession(sess []*Session) (qt map[SessionType]map[time.Weekday]string, err error) {
+	qt = map[SessionType]map[time.Weekday]string{
+		Quote: map[time.Weekday]string{time.Saturday: "", time.Sunday: ""},
+		Trade: map[time.Weekday]string{time.Saturday: "", time.Sunday: ""},
 	}
 
 	for _, session := range sess {
-		weekday, err := strconv.Atoi(session.Weekday)
-		if err != nil {
-			return nil, err
-		}
-
-		if qt[session.Type][time.Weekday(weekday)] == "" {
-			qt[session.Type][time.Weekday(weekday)] = session.TimeSpan
+		if qt[session.Type][session.Weekday] == "" {
+			qt[session.Type][session.Weekday] = session.TimeSpan
 		} else {
-			qt[session.Type][time.Weekday(weekday)] += "," + session.TimeSpan
+			qt[session.Type][session.Weekday] += "," + session.TimeSpan
 		}
 	}
 
@@ -199,7 +186,7 @@ func EncodeSession(sess []*Session) (qt map[string]map[time.Weekday]string, err 
 	return
 }
 
-func DecodeSession(symbolID int, symbolName, sessionType string, sessions map[time.Weekday]string) []*Session {
+func DecodeSession(symbolID int, sessionType SessionType, sessions map[time.Weekday]string) []*Session {
 	sess := make([]*Session, 0)
 	for weekday, se := range sessions {
 		sl := strings.Split(se, ",")
@@ -207,7 +194,7 @@ func DecodeSession(symbolID int, symbolName, sessionType string, sessions map[ti
 			if time == "00:00-00:00" {
 				continue
 			}
-			sess = append(sess, NewSession(symbolID, symbolName, sessionType, strconv.Itoa(int(weekday)), time))
+			sess = append(sess, NewSession(symbolID, sessionType, weekday, time))
 		}
 	}
 

@@ -1,0 +1,17 @@
+{
+  "dev": {
+    "bridgehost": {
+      "address": "107.150.112.223",
+      "port": 9092
+    },
+
+    "leverCovSymbol": ["AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","CADCHF","CADJPY","CHFJPY",
+      "EURAUD","EURCAD","EURCHF","EURGBP","EURJPY","EURNZD","EURUSD","GBPAUD","GBPCAD","GBPCHF",
+      "GBPJPY","GBPNZD","GBPUSD","NZDCAD","NZDCHF","NZDJPY","NZDUSD","USDCAD","USDCHF","USDCNH",
+      "USDHKD","USDJPY","XAUUSD","XAGUSD","XNGUSD"]
+  },
+  "test": {
+  },
+  "prod": {
+  }
+}

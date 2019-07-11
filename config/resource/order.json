@@ -1,0 +1,18 @@
+{
+  "dev": {
+    "mysql": {
+      "user": "globaldb_dev",
+      "pwd": "Mv0N7vZdBj9fD0Lo",
+      "host": "106.75.98.106",
+      "port": "3306",
+      "dbname": "metatrader4",
+      "idleConns": 5,
+      "maxOpenConns": 5,
+      "showSQL": false
+    }
+  },
+  "test": {
+  },
+  "prod": {
+  }
+}

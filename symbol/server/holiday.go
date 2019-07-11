@@ -1,10 +1,9 @@
 package server
 
 import (
-	"fmt"
+	"github.com/juju/errors"
 	"sync"
 	"time"
-	"errors"
 )
 
 type Holiday struct {
@@ -55,17 +54,17 @@ func InitHolidayOperator(holidayRepo HolidayRepository) *holidayOperator {
 func holidayFormatCheck(holi *Holiday) error {
 	_, err := time.ParseInLocation("2006-01-02", holi.Date, time.UTC)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid date: %s", holi.Date))
+		return errors.NotValidf("date %s", holi.Date)
 	}
 
 	_, err = time.ParseInLocation("15:04:05", holi.From, time.UTC)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid from: %s", holi.From))
+		return errors.NotValidf("from %s", holi.From)
 	}
 
 	_, err = time.ParseInLocation("15:04:05", holi.To, time.UTC)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid to: %s", holi.To))
+		return errors.NotValidf("to %s", holi.To)
 	}
 
 	switch holi.Category {
@@ -74,67 +73,74 @@ func holidayFormatCheck(holi *Holiday) error {
 	case HolidaySecurity:
 		valid, err := GetSecurityOperator().ValidSecurityName(holi.Symbol)
 		if err != nil {
-			return err
+			return errors.Annotate(err, "sql exec")
 		}
 		if !valid {
-			return errors.New(fmt.Sprintf("invalid security: %s", holi.Symbol))
+			return errors.NotValidf("security %s", holi.Symbol)
 		}
 
 	case HolidaySymbol:
 		valid, err := GetSymbolOperator().ValidSymbolName(holi.Symbol)
 		if err != nil {
-			return err
+			return errors.Annotate(err, "sql exec")
 		}
 		if !valid {
-			return errors.New(fmt.Sprintf("invalid symbol: %s", holi.Symbol))
+			return errors.NotValidf("symbol %s", holi.Symbol)
 		}
 
 	default:
-		return errors.New(fmt.Sprintf("invalid category: %d", holi.Category))
+		return errors.NotValidf("category %d", holi.Category)
 	}
 
 	return nil
 }
 
 func (ho *holidayOperator) InsertHoliday(holi *Holiday) error {
-	err := holidayFormatCheck(holi)
-	if err != nil {
-		return err
+	if err := holidayFormatCheck(holi); err != nil {
+		return errors.NewNotValid(err, "validation holiday")
 	}
-	_, err = ho.holidayRepo.Insert(holi)
 
-	return err
+	if _, err := ho.holidayRepo.Insert(holi); err != nil {
+		return errors.Annotate(err, "sql exec")
+	}
+
+	return nil
 }
 
 func (ho *holidayOperator) UpdateHolidayByID(ID int, holi *Holiday) error {
 	valid, err := ho.holidayRepo.ValidHolidayID(ID)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "sql exec")
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid holiday id: %d", ID))
+		return errors.NotValidf("holiday id %d", ID)
 	}
 
 	if err := holidayFormatCheck(holi); err != nil {
-		return err
+		return errors.NewNotValid(err, "validation holiday")
 	}
 
-	return ho.holidayRepo.UpdateByID(ID, holi)
+	if err := ho.holidayRepo.UpdateByID(ID, holi); err != nil {
+		return errors.Annotate(err, "sql exec")
+	}
+
+	return nil
 }
 
 func (ho *holidayOperator) IsTradable(symbol string) bool {
-	if holiCache.notHoliday {
+	holiCaches.RLock()
+	defer holiCaches.RUnlock()
+
+	date := time.Now().UTC().Format("2006-01-02")
+	if _, ok := holiCaches.info[date]; !ok {
 		return true
 	}
 
-	holiCache.RLock()
-	defer holiCache.RUnlock()
-
-	if !holiCache.todaySymbol[symbol] {
+	if !holiCaches.info[date].todaySymbol[symbol] {
 		return true
 	}
 
-	for _, v := range holiCache.symbolHolidays[symbol] {
+	for _, v := range holiCaches.info[date].symbolHolidays[symbol] {
 		if v.from == "00:00:00" && v.to == "00:00:00" {
 			return false
 		}
@@ -154,87 +160,112 @@ type holidayTime struct {
 	to   string
 }
 
-type holidayCache struct {
-	notHoliday     bool
-	todaySymbol    map[string]bool
-	symbolHolidays map[string][]holidayTime
+type holidayCaches struct {
+	info map[string]*holidayCache
 	sync.RWMutex
 }
 
-var holiCache holidayCache
+type holidayCache struct {
+	todaySymbol    map[string]bool
+	symbolHolidays map[string][]holidayTime
+}
+
+var holiCaches = holidayCaches{info: make(map[string]*holidayCache)}
 
 func LoadHolidayCacheByDate(date string) error {
 	holidays, err := GetHolidayOperator().holidayRepo.GetByDate(date)
 	if err != nil {
-		panic(err)
+		return errors.Annotate(err, "sql exec")
 	}
 
-	if holidays == nil {
-		holiCache.notHoliday = true
+	if len(holidays) == 0 {
 		return nil
 	}
 
-	holiCache.todaySymbol = make(map[string]bool)
-	holiCache.symbolHolidays = make(map[string][]holidayTime)
+	holiCaches.Lock()
+	defer holiCaches.Unlock()
 
-	holiCache.Lock()
-	defer holiCache.Unlock()
+	if _, ok := holiCaches.info[date]; ok {
+		return nil
+	}
+
+	holiCaches.info[date] = &holidayCache{}
+	holiCaches.info[date].todaySymbol = make(map[string]bool)
+	holiCaches.info[date].symbolHolidays = make(map[string][]holidayTime)
 
 	for i := range holidays {
 		switch holidays[i].Category {
 		case HolidayAll:
 			symbols, err := GetSymbolOperator().GetSymbolsName()
 			if err != nil {
-				panic(err)
+				return errors.Annotate(err, "sql exec")
 			}
 
 			for j := range symbols {
-				holiCache.todaySymbol[symbols[j]] = true
+				holiCaches.info[date].todaySymbol[symbols[j]] = true
 
-				if holiCache.symbolHolidays[symbols[j]] == nil {
-					holiCache.symbolHolidays[symbols[j]] = make([]holidayTime, 0)
+				if holiCaches.info[date].symbolHolidays[symbols[j]] == nil {
+					holiCaches.info[date].symbolHolidays[symbols[j]] = make([]holidayTime, 0)
 				}
 
-				holiCache.symbolHolidays[symbols[j]] = append(holiCache.symbolHolidays[symbols[j]],
+				holiCaches.info[date].symbolHolidays[symbols[j]] = append(holiCaches.info[date].symbolHolidays[symbols[j]],
 					holidayTime{from: holidays[i].From, to: holidays[i].To})
 			}
 
 		case HolidaySecurity:
-			securityID, err := GetSecurityOperator().GetIDByName(holidays[i].Symbol)
+			securityID, exist, err := GetSecurityOperator().GetIDByName(holidays[i].Symbol)
 			if err != nil {
-				panic(err)
+				return errors.Annotate(err, "sql exec")
+			}
+
+			if !exist {
+				return errors.NotFoundf("security name %s", holidays[i].Symbol)
 			}
 
 			symbols, err := GetSymbolOperator().GetSymbolsNameBySecurityID(securityID)
 			if err != nil {
-				panic(err)
+				return errors.Annotate(err, "sql exec")
 			}
 
 			for j := range symbols {
-				holiCache.todaySymbol[symbols[j]] = true
+				holiCaches.info[date].todaySymbol[symbols[j]] = true
 
-				if holiCache.symbolHolidays[symbols[j]] == nil {
-					holiCache.symbolHolidays[symbols[j]] = make([]holidayTime, 0)
+				if holiCaches.info[date].symbolHolidays[symbols[j]] == nil {
+					holiCaches.info[date].symbolHolidays[symbols[j]] = make([]holidayTime, 0)
 				}
 
-				holiCache.symbolHolidays[symbols[j]] = append(holiCache.symbolHolidays[symbols[j]],
+				holiCaches.info[date].symbolHolidays[symbols[j]] = append(holiCaches.info[date].symbolHolidays[symbols[j]],
 					holidayTime{from: holidays[i].From, to: holidays[i].To})
 			}
 
 		case HolidaySymbol:
-			holiCache.todaySymbol[holidays[i].Symbol] = true
+			holiCaches.info[date].todaySymbol[holidays[i].Symbol] = true
 
-			if holiCache.symbolHolidays[holidays[i].Symbol] == nil {
-				holiCache.symbolHolidays[holidays[i].Symbol] = make([]holidayTime, 0)
+			if holiCaches.info[date].symbolHolidays[holidays[i].Symbol] == nil {
+				holiCaches.info[date].symbolHolidays[holidays[i].Symbol] = make([]holidayTime, 0)
 			}
 
-			holiCache.symbolHolidays[holidays[i].Symbol] = append(holiCache.symbolHolidays[holidays[i].Symbol],
+			holiCaches.info[date].symbolHolidays[holidays[i].Symbol] = append(holiCaches.info[date].symbolHolidays[holidays[i].Symbol],
 				holidayTime{from: holidays[i].From, to: holidays[i].To})
 
 		default:
-			panic(fmt.Sprintf("invalid holiday category: %d", holidays[i].Category))
+			err = errors.NotValidf("category %d", holidays[i].Category)
+			panic(err)
 		}
 	}
 
 	return nil
+}
+
+func RmHolidayCacheBeforeToday() {
+	holiCaches.Lock()
+	defer holiCaches.Unlock()
+
+	today := time.Now().UTC().Format("2006-01-02")
+
+	for day := range holiCaches.info {
+		if day < today {
+			delete(holiCaches.info, day)
+		}
+	}
 }

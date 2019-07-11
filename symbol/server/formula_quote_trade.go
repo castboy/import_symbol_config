@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	Leverage   = 100
+	SystemLeverage   = 100
+	SymbolLeverage = 100
 	DaysInYear = 360
 )
 
@@ -16,17 +17,18 @@ func (symb *Symbol) MarginFormula() func(lots, marketPrice decimal.Decimal) deci
 	switch symb.MarginMode {
 	case MarginForex:
 		return func(lots, marketPrice decimal.Decimal) decimal.Decimal {
-			return lots.Mul(symb.ContractSize).Div(symb.Leverage).Mul(symb.Percentage).Div(decimal.NewFromFloat(Leverage))
+			// TODO : symbol.Leverage
+			return lots.Mul(symb.ContractSize).Div(decimal.NewFromFloat(SymbolLeverage)).Mul(symb.Percentage).Div(decimal.NewFromFloat(SystemLeverage))
 		}
 
 	case MarginCfd:
 		return func(lots, marketPrice decimal.Decimal) decimal.Decimal {
-			return lots.Mul(symb.ContractSize).Mul(marketPrice).Mul(symb.Percentage).Div(decimal.NewFromFloat(Leverage))
+			return lots.Mul(symb.ContractSize).Mul(marketPrice).Mul(symb.Percentage).Div(decimal.NewFromFloat(SystemLeverage))
 		}
 
 	case MarginFutures:
 		return func(lots, marketPrice decimal.Decimal) decimal.Decimal {
-			return lots.Mul(symb.MarginInitial).Mul(symb.Percentage).Div(decimal.NewFromFloat(Leverage))
+			return lots.Mul(symb.MarginInitial).Mul(symb.Percentage).Div(decimal.NewFromFloat(SystemLeverage))
 		}
 
 	case MarginCfdIndex:
@@ -34,7 +36,8 @@ func (symb *Symbol) MarginFormula() func(lots, marketPrice decimal.Decimal) deci
 
 	case MarginCfdLeverage:
 		return func(lots, marketPrice decimal.Decimal) decimal.Decimal {
-			return lots.Mul(symb.ContractSize).Mul(marketPrice).Div(symb.Leverage).Mul(symb.Percentage).Div(decimal.NewFromFloat(Leverage))
+			// TODO : symbol.Leverage
+			return lots.Mul(symb.ContractSize).Mul(marketPrice).Div(decimal.NewFromFloat(SymbolLeverage)).Mul(symb.Percentage).Div(decimal.NewFromFloat(SystemLeverage))
 		}
 
 	default:
@@ -74,7 +77,7 @@ func (symb *Symbol) SwapFormula() func(lots, longOrShort decimal.Decimal, price 
 
 	case ByInterest:
 		return func(lots, longOrShort decimal.Decimal, price ...decimal.Decimal) decimal.Decimal {
-			return lots.Mul(longOrShort).Mul(symb.ContractSize).Div(decimal.NewFromFloat(Leverage)).Div(decimal.NewFromFloat(DaysInYear))
+			return lots.Mul(longOrShort).Mul(symb.ContractSize).Div(decimal.NewFromFloat(SystemLeverage)).Div(decimal.NewFromFloat(DaysInYear))
 		}
 
 	case ByMoneyInMarginCurrency:
@@ -82,7 +85,7 @@ func (symb *Symbol) SwapFormula() func(lots, longOrShort decimal.Decimal, price 
 
 	case ByInterestOfCfds:
 		return func(lots, longOrShort decimal.Decimal, price ...decimal.Decimal) decimal.Decimal {
-			return lots.Mul(longOrShort).Mul(symb.ContractSize).Mul(price[0]).Div(decimal.NewFromFloat(Leverage)).Div(decimal.NewFromFloat(DaysInYear))
+			return lots.Mul(longOrShort).Mul(symb.ContractSize).Mul(price[0]).Div(decimal.NewFromFloat(SystemLeverage)).Div(decimal.NewFromFloat(DaysInYear))
 		}
 
 	case ByInterestOfFutures:

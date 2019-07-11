@@ -1,0 +1,16 @@
+{
+  "dev": {
+    "port": ":50001",
+    "mysql": {
+      "user": "globaldb_dev",
+      "pwd": "Mv0N7vZdBj9fD0Lo",
+      "host": "106.75.98.106",
+      "port": "3306",
+      "dbname": "trading_system"
+    }
+  },
+  "test": {
+  },
+  "prod": {
+  }
+}

@@ -38,6 +38,8 @@ type SymbolOperater interface {
 	SetSymbolSecurity(symbolID int, securityID int) error
 	UpdateSymbolSecurity(symbolID int, oldSecurityID int, newSecurityID int) error
 
+	GetSymbolLeverage(symbolSource string) (symbols []string, err error)
+
 	Start()
 }
 

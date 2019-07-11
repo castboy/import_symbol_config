@@ -1,10 +1,8 @@
 package mysql
 
 import (
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"errors"
 	"import_symbol_config/symbol/server"
 )
 
@@ -24,21 +22,15 @@ func GetSymbolRepository() *symbolRepository {
 	return symbolRep
 }
 
-func (sr *symbolRepository) GetSymbolInfoByName(symbolName string) (symbol *server.Symbol, err error) {
+func (sr *symbolRepository) GetSymbolInfoByName(symbolName string) (symbol *server.Symbol, exist bool, err error) {
 	symbol = new(server.Symbol)
-	hit, err := sr.engine.Table(server.Symbol{}).Where("symbol=?", symbolName).NoAutoCondition(true).Get(symbol)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid symbol name: %s", symbolName))
-	}
+	exist, err = sr.engine.Table(server.Symbol{}).Where("symbol=?", symbolName).NoAutoCondition(true).Get(symbol)
 	return
 }
 
-func (sr *symbolRepository) GetSymbolInfoByID(ID int) (symbol *server.Symbol, err error) {
+func (sr *symbolRepository) GetSymbolInfoByID(ID int) (symbol *server.Symbol, exist bool, err error) {
 	symbol = new(server.Symbol)
-	hit, err := sr.engine.Table(server.Symbol{}).Where("id=?", ID).NoAutoCondition(true).Get(symbol)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid symbol id: %d", ID))
-	}
+	exist, err = sr.engine.Table(server.Symbol{}).Where("id=?", ID).NoAutoCondition(true).Get(symbol)
 	return
 }
 
@@ -57,11 +49,8 @@ func (sr *symbolRepository) InsertSession(sess []*server.Session) error {
 	return err
 }
 
-func (sr *symbolRepository) GetIDByName(symbolName string) (ID int, err error) {
-	hit, err := sr.engine.Table(server.Symbol{}).Select("id").Where("symbol=?", symbolName).Get(&ID)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid symbol: %s", symbolName))
-	}
+func (sr *symbolRepository) GetIDByName(symbolName string) (ID int, exist bool, err error) {
+	exist, err = sr.engine.Table(server.Symbol{}).Select("id").Where("symbol=?", symbolName).Get(&ID)
 	return
 }
 
@@ -115,10 +104,6 @@ func (sr *symbolRepository) ValidSymbolName(symbolName string) (valid bool, err 
 	return sr.engine.Table(server.Symbol{}).Where("symbol=?", symbolName).Exist()
 }
 
-func (sr *symbolRepository) ValidSymbolNameID(symbolName string, symbolID int) (valid bool, err error) {
-	return sr.engine.Table(server.Symbol{}).Where("symbol=? and id=?", symbolName, symbolID).Exist()
-}
-
 func (sr *symbolRepository) ValidSymbolSecurity(symbolID int, securityID int) (valid bool, err error) {
 	return sr.engine.Table(server.Symbol{}).Where("id=? and security_id=?", symbolID, securityID).Exist()
 }
@@ -135,4 +120,9 @@ func (sr *symbolRepository) GetSymbolsName() (symbols []string, err error) {
 
 func (sr *symbolRepository) SecurityHoldSymbols(securityID int) (hold bool, err error) {
 	return sr.engine.Table(server.Symbol{}).Where("security_id=?", securityID).Exist()
+}
+
+func (sr *symbolRepository) GetSymbolLeverage(symbolSource string) (symbols []string, err error) {
+	err = sr.engine.Table(server.Symbol{}).Select("symbol").Where("symbol=? or source=?", symbolSource, symbolSource).Find(&symbols)
+	return
 }

@@ -7,13 +7,12 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-xorm/xorm"
+	"github.com/juju/errors"
 	"github.com/shopspring/decimal"
-	"sync"
-	"time"
 	"import_symbol_config/config"
+	"time"
 )
 
 // Symbol represents a instance of symbol
@@ -38,7 +37,6 @@ type Symbol struct {
 	// margin settings
 	MarginMode     MarginMode      `json:"margin_mode" xorm:"margin_mode"`
 	MarginCurrency string          `json:"margin_currency" xorm:"margin_currency"`
-	Leverage       decimal.Decimal `json:"leverage" xorm:"leverage"`
 	// swap settings
 	SwapType     SwapType        `json:"swap_type" xorm:"swap_type"`
 	SwapLong     decimal.Decimal `json:"swap_long" xorm:"swap_long"`
@@ -155,14 +153,14 @@ const (
 )
 
 type SymbolRepository interface {
-	GetSymbolInfoByName(symbolName string) (symbol *Symbol, err error)
-	GetSymbolInfoByID(ID int) (symbol *Symbol, err error)
+	GetSymbolInfoByName(symbolName string) (symbol *Symbol, exist bool, err error)
+	GetSymbolInfoByID(ID int) (symbol *Symbol, exist bool, err error)
 	GetSymbols() (symbols []Symbol, err error)
 
 	//create new record, update existing record, delete existing record.
 	InsertSymbol(symbol *Symbol) error
 	InsertSession(sess []*Session) error
-	GetIDByName(symbolName string) (ID int, err error)
+	GetIDByName(symbolName string) (ID int, exist bool, err error)
 
 	UpdateByID(ID int, symbol *Symbol) error
 	UpdateByName(symbolName string, symbol *Symbol) error
@@ -178,13 +176,14 @@ type SymbolRepository interface {
 	UpdateSymbolSecurity(symbolID int, securityID int) (num int64, err error)
 	ValidSymbolID(ID int) (valid bool, err error)
 	ValidSymbolName(symbolName string) (valid bool, err error)
-	ValidSymbolNameID(symbolName string, symbolID int) (valid bool, err error)
 	ValidSymbolSecurity(symbolID int, securityID int) (valid bool, err error)
 
 	GetSymbolsNameBySecurityID(securityID int) (symbols []string, err error)
 	GetSymbolsName() (symbols []string, err error)
 
 	SecurityHoldSymbols(securityID int) (hold bool, err error)
+
+	GetSymbolLeverage(symbolSource string) (symbols []string, err error)
 }
 
 type symbolOperator struct {
@@ -206,21 +205,22 @@ func InitSymbolOperator(symbolRepo SymbolRepository) *symbolOperator {
 	return symbolOp
 }
 
+
 func (ss *symbolOperator) Start() {
 	if config.GetConfigService("symbol").GetBool("import_from_config") {
 		symbols, err := parseSymbols()
 		if err != nil {
 			//panic(err)
 		}
-		ss.importSymbols(symbols)
+		importSymbols(symbols)
 
 		securities, err := parseSecurity()
 		if err != nil {
 			panic(err)
 		}
-		ss.insertSecurityInfo(securities)
+		insertSecurityInfo(securities)
 
-		ss.setSymbolSecurity(securities)
+		setSymbolSecurity(securities)
 
 		holidays, err := parseHoliday()
 		if err != nil {
@@ -228,10 +228,6 @@ func (ss *symbolOperator) Start() {
 		}
 		importHolidays(holidays)
 	}
-
-	date := time.Now().UTC().Format("2006-01-02")
-	LoadHolidayCacheByDate(date)
-	LoadSymbolCache()
 }
 
 func importHolidays(holidays []Holiday) {
@@ -246,31 +242,42 @@ func importHolidays(holidays []Holiday) {
 
 func importHoliday(holiday *Holiday) error {
 	ho := GetHolidayOperator()
-	_, err := ho.holidayRepo.Insert(holiday)
+	err := ho.InsertHoliday(holiday)
 	return err
 }
 
-func (ss *symbolOperator) insertSecurityInfo(securities []Security) {
+func insertSecurityInfo(securities []Security) {
 	so := GetSecurityOperator()
 	for i, _ := range securities {
-		if err := so.securityRepo.InsertSecurity(&securities[i]); err != nil {
+		if err := so.InsertSecurityInfo(&securities[i]); err != nil {
 			panic(err)
 		}
 	}
 }
 
-func (ss *symbolOperator) setSymbolSecurity(securities []Security) {
+func setSymbolSecurity(securities []Security) {
 	so := GetSecurityOperator()
 	for i, _ := range securities {
-		securityID, err := so.GetIDByName(securities[i].SecurityName)
+		securityID, exist, err := so.GetIDByName(securities[i].SecurityName)
 		if err != nil {
 			panic(err)
 		}
 
+		if !exist {
+			err = fmt.Errorf("invalid security name: %s", securities[i].SecurityName)
+			panic(err)
+		}
+
+		ss := GetSymbolOperator()
 		for j, _ := range securities[i].Symbols {
-			symbolID, err := symbolOp.GetIDByName(securities[i].Symbols[j])
+			symbolID, exist, err := symbolOp.GetIDByName(securities[i].Symbols[j])
 			if err != nil {
 				fmt.Println(err) // TODO
+			}
+
+			if !exist {
+				err = fmt.Errorf("sdfasf")
+				panic(err)
 			}
 
 			if err := ss.SetSymbolSecurity(symbolID, securityID); err != nil {
@@ -280,116 +287,152 @@ func (ss *symbolOperator) setSymbolSecurity(securities []Security) {
 	}
 }
 
-func (ss *symbolOperator) importSymbols(symbols []Symbol) {
+func importSymbols(symbols []Symbol) {
 	Len := len(symbols)
 	for i := 0; i < Len; i++ {
-		err := ss.importSymbol(&symbols[i])
+		err := importSymbol(&symbols[i])
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func (ss *symbolOperator) importSymbol(symbol *Symbol) error {
-	err := ss.symbolRepo.InsertSymbol(symbol)
+func importSymbol(symbol *Symbol) error {
+	so := GetSymbolOperator()
+	err := so.InsertSymbol(symbol)
 	if err != nil {
 		return err
 	}
 
-	id, err := ss.symbolRepo.GetIDByName(symbol.Symbol)
+	id, exist, err := so.GetIDByName(symbol.Symbol)
 	if err != nil {
+		return err
+	}
+
+	if !exist {
+		err = fmt.Errorf("invalid symbol name: %s", symbol.Symbol)
 		return err
 	}
 
 	symbol.ID = id
 
-	quote := DecodeSession(symbol.ID, symbol.Symbol, "quote", symbol.QuoteSession)
-	trade := DecodeSession(symbol.ID, symbol.Symbol, "trade", symbol.TradeSession)
+	quote := DecodeSession(symbol.ID, Quote, symbol.QuoteSession)
+	trade := DecodeSession(symbol.ID, Trade, symbol.TradeSession)
 	quote = append(quote, trade...)
 
 	return GetSessionOperator().InsertSessions(quote...)
 }
 
+
 func (ss *symbolOperator) GetSymbolInfoByName(symbolName string) (symbol *Symbol) {
-	// get symbol from cache firstly.
-	symbol = getSymbolByNameFromCache(symbolName)
-	if symbol != nil {
-		return
-	}
 	// get symbol from mysql if get symbol failed from cache.
-	symbol, err := ss.symbolRepo.GetSymbolInfoByName(symbolName)
-	if err != nil || symbol == nil {
-		return nil // TODO optimize
+	symbol, exist, err := ss.symbolRepo.GetSymbolInfoByName(symbolName)
+	if err != nil {
+		err = errors.Annotate(err, "sql exec")
+		return nil
+	}
+
+	if !exist {
+		err = errors.NotFoundf("symbol name %s", symbolName)
+		return nil
 	}
 
 	sess, err := GetSessionOperator().GetSessionsByName(symbolName)
-	if err != nil || sess == nil {
-		return symbol // TODO ??
+	if err != nil {
+		err = errors.Annotate(err, "sql exec")
+		return nil
+	}
+
+	if len(sess) == 0 {
+		err = errors.NotFoundf("symbol name %s", symbolName)
+		return nil
 	}
 
 	sessions, err := EncodeSession(sess)
 	if err != nil {
+		err = errors.Annotate(err, "encode session")
 		return nil
 	}
 
 	symbol.QuoteSession, symbol.QuoteSession = make(map[time.Weekday]string), make(map[time.Weekday]string)
-	symbol.QuoteSession, symbol.TradeSession = sessions["quote"], sessions["trade"]
+	symbol.QuoteSession, symbol.TradeSession = sessions[Quote], sessions[Trade]
+
+	// cache
 
 	return
 }
 
 func (ss *symbolOperator) GetSymbolInfoByID(ID int) (symbol *Symbol) {
-	// get symbol from cache firstly.
-	symbol = getSymbolByIDFromCache(ID)
-	if symbol != nil {
-		return
-	}
 	// get symbol from mysql if get symbol failed from cache.
-	symbol, err := ss.symbolRepo.GetSymbolInfoByID(ID)
+	symbol, exist, err := ss.symbolRepo.GetSymbolInfoByID(ID)
 	if err != nil {
-		return nil // TODO optimize
+		err = errors.Annotate(err, "sql exec")
+		return nil
+	}
+
+	if !exist {
+		err = errors.NotFoundf("symbol id %d", ID)
+		return nil
 	}
 
 	sess, err := GetSessionOperator().GetSessionsByID(ID)
-	if err != nil || sess == nil {
-		return symbol // TODO ??
+	if err != nil {
+		err = errors.Annotate(err, "sql exec")
+		return nil
+	}
+
+	if len(sess) == 0 {
+		err = errors.NotFoundf("symbol id %d", ID)
+		return nil
 	}
 
 	sessions, err := EncodeSession(sess)
 	if err != nil {
+		err = errors.Annotate(err, "encode session")
 		return nil
 	}
 
 	symbol.QuoteSession, symbol.QuoteSession = make(map[time.Weekday]string), make(map[time.Weekday]string)
-	symbol.QuoteSession, symbol.TradeSession = sessions["quote"], sessions["trade"]
+	symbol.QuoteSession, symbol.TradeSession = sessions[Quote], sessions[Trade]
+
+	// cache
 
 	return
 }
 
 func (ss *symbolOperator) GetSymbols() (symbols []Symbol) {
-	// if symbols were cached.
-	if symbCache != nil {
-		return getSymbolsFromCache()
-	}
 
 	// if symbols were not cached.
 	symbols, err := ss.symbolRepo.GetSymbols()
-	if err != nil || len(symbols) == 0 {
-		return nil // TODO optimize
+	if err != nil {
+		err = errors.Annotate(err, "sql exec")
+		return nil
+	}
+
+	if len(symbols) == 0 {
+		err = errors.NotFoundf("symbols")
+		return nil
 	}
 
 	for k, _ := range symbols {
 		ss, err := GetSessionOperator().GetSessionsByID(symbols[k].ID)
-		if err != nil || ss == nil {
-			continue // TODO ??
-		}
-		sessions, err := EncodeSession(ss)
 		if err != nil {
-			return nil // ??
+			err = errors.Annotate(err, "sql exec")
+			continue
+		}
+		if len(ss) == 0 {
+			err = errors.NotFoundf("symbol id %d", symbols[k].ID)
+			continue
 		}
 
-		symbols[k].QuoteSession = sessions["quote"]
-		symbols[k].TradeSession = sessions["trade"]
+		sessions, err := EncodeSession(ss)
+		if err != nil {
+			err = errors.Annotate(err, "encode session")
+			continue // TODO
+		}
+
+		symbols[k].QuoteSession, symbols[k].QuoteSession = make(map[time.Weekday]string), make(map[time.Weekday]string)
+		symbols[k].QuoteSession, symbols[k].TradeSession = sessions[Quote], sessions[Trade]
 	}
 	return
 }
@@ -397,36 +440,37 @@ func (ss *symbolOperator) GetSymbols() (symbols []Symbol) {
 func symbolFormatCheck(symbol *Symbol) error {
 	if symbol.SymbolType != SymbolFx && symbol.SymbolType != SymbolMetal && symbol.SymbolType != SymbolEnergy &&
 		symbol.SymbolType != SymbolIndex && symbol.SymbolType != SymbolCrypto {
-		return errors.New(fmt.Sprintf("invalid symbol type: %d", symbol.SymbolType))
+		return errors.NotValidf("symbol type %d", symbol.SymbolType)
 	}
 
 	valid, err := GetSecurityOperator().ValidSecurityID(symbol.SecurityID)
 	if err != nil {
+		err = errors.Annotatef(err, "security id %d", symbol.SecurityID)
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid security id: %d", symbol.SecurityID))
+		return errors.NotValidf("security id %d", symbol.SecurityID)
 	}
 
 	if symbol.ProfitMode != ProfitForex && symbol.ProfitMode != ProfitCfd && symbol.ProfitMode != ProfitFutures {
-		return errors.New(fmt.Sprintf("invalid profit mode: %d", symbol.ProfitMode))
+		return errors.NotValidf("profit mode %d", symbol.ProfitMode)
 	}
 
 	if symbol.MarginMode != MarginForex && symbol.MarginMode != MarginCfd && symbol.MarginMode != MarginFutures &&
 		symbol.MarginMode != MarginCfdIndex && symbol.MarginMode != MarginCfdLeverage {
-		return errors.New(fmt.Sprintf("invalid margin mode: %d", symbol.MarginMode))
+		return errors.NotValidf("margin mode %d", symbol.MarginMode)
 	}
 
 	if symbol.SwapType != ByPoints && symbol.SwapType != ByMoney && symbol.SwapType != ByInterest &&
 		symbol.SwapType != ByMoneyInMarginCurrency && symbol.SwapType != ByInterestOfCfds &&
 		symbol.SwapType != ByInterestOfFutures {
-		return errors.New(fmt.Sprintf("invalid swaptype: %d", symbol.SwapType))
+		return errors.NotValidf("swaptype %d", symbol.SwapType)
 	}
 
 	if symbol.Swap3Day != SwapMonday && symbol.Swap3Day != SwapTuesday && symbol.Swap3Day != SwapWednesday &&
 		symbol.Swap3Day != SwapThursday && symbol.Swap3Day != SwapFriday && symbol.Swap3Day != SwapSaturday &&
 		symbol.Swap3Day != SwapSunday {
-		return errors.New(fmt.Sprintf("invalid swap3day: %d", symbol.Swap3Day))
+		return errors.NotValidf("swap3day: %d", symbol.Swap3Day)
 	}
 
 	return nil
@@ -434,13 +478,15 @@ func symbolFormatCheck(symbol *Symbol) error {
 
 func (ss *symbolOperator) InsertSymbol(symbol *Symbol) error {
 	// insert mysql firstly.
-	err := symbolFormatCheck(symbol)
-	if err != nil {
-		return err
-	}
+	//err := symbolFormatCheck(symbol)
+	//if err != nil {
+	//	err = errors.NewNotValid(err, "validation failed")
+	//	return err
+	//}
 
-	err = ss.symbolRepo.InsertSymbol(symbol)
+	err := ss.symbolRepo.InsertSymbol(symbol)
 	if err != nil {
+		err = errors.Annotate(err, "sql exec")
 		return err
 	}
 
@@ -448,31 +494,38 @@ func (ss *symbolOperator) InsertSymbol(symbol *Symbol) error {
 		return nil
 	}
 
-	id, err := ss.symbolRepo.GetIDByName(symbol.Symbol)
+	id, exist, err := ss.symbolRepo.GetIDByName(symbol.Symbol)
 	if err != nil {
+		err = errors.Annotate(err, "sql exec")
+		return err
+	}
+
+	if !exist {
+		err = errors.NotFoundf("symbol name %s", symbol.Symbol)
 		return err
 	}
 
 	symbol.ID = id
 
 	if symbol.QuoteSession != nil {
-		quote := DecodeSession(symbol.ID, symbol.Symbol, "quote", symbol.QuoteSession)
+		quote := DecodeSession(symbol.ID, Quote, symbol.QuoteSession)
 		err := ss.symbolRepo.InsertSession(quote)
 		if err != nil {
+			err = errors.Annotate(err, "sql exec: insert quote session")
 			return err
 		}
 	}
 
 	if symbol.TradeSession == nil {
-		trade := DecodeSession(symbol.ID, symbol.Symbol, "quote", symbol.TradeSession)
+		trade := DecodeSession(symbol.ID, Trade, symbol.TradeSession)
 		err := ss.symbolRepo.InsertSession(trade)
 		if err != nil {
+			err = errors.Annotate(err, "sql exec: insert trade session")
 			return err
 		}
 	}
 
 	// then insert cache.
-	insertSymbolToCache(symbol)
 
 	return nil
 }
@@ -480,29 +533,27 @@ func (ss *symbolOperator) InsertSymbol(symbol *Symbol) error {
 func (ss *symbolOperator) UpdateSymbolByID(ID int, symbol *Symbol) error {
 	valid, err := ss.symbolRepo.ValidSymbolID(ID)
 	if err != nil {
+		err = errors.Annotate(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid symbol id: %d", ID))
+		err = errors.NotValidf("symbol id %d", ID)
+		return err
 	}
 
 	err = symbolFormatCheck(symbol)
 	if err != nil {
+		err = errors.NewNotValid(err, "validation failed")
 		return err
 	}
 
 	err = ss.symbolRepo.UpdateByID(ID, symbol)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec, id %d, symbol %+v", ID, symbol)
 		return err
 	}
 
-	// update cache.
-	deleteSymbolCacheByID(ID)
-	symbol = ss.GetSymbolInfoByID(ID)
-	if symbol == nil {
-		return errors.New("update symbol cache failed by id")
-	}
-	insertSymbolToCache(symbol)
+	// delete cache to re-cache.
 
 	return nil
 }
@@ -510,29 +561,27 @@ func (ss *symbolOperator) UpdateSymbolByID(ID int, symbol *Symbol) error {
 func (ss *symbolOperator) UpdateSymbolByName(symbolName string, symbol *Symbol) error {
 	valid, err := ss.symbolRepo.ValidSymbolName(symbolName)
 	if err != nil {
+		err = errors.Annotate(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid symbol name: %s", symbolName))
+		err = errors.NotValidf("symbol name %s", symbolName)
+		return err
 	}
 
 	err = symbolFormatCheck(symbol)
 	if err != nil {
+		err = errors.NewNotValid(err, "validation failed")
 		return err
 	}
 
 	err = ss.symbolRepo.UpdateByName(symbolName, symbol)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec, name %d, symbol %+v", symbolName, symbol)
 		return err
 	}
 
-	// update cache.
-	deleteSymbolCacheByName(symbolName)
-	symbol = ss.GetSymbolInfoByName(symbolName)
-	if symbol == nil {
-		return errors.New("update symbol cache failed by name")
-	}
-	insertSymbolToCache(symbol)
+	// delete cache to re-cache.
 
 	return nil
 }
@@ -542,29 +591,33 @@ func (ss *symbolOperator) DeleteSymbolByID(ID int) error {
 	defer trac.Close()
 
 	if err := trac.Begin(); err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	hit, err := ss.symbolRepo.TransactionDeleteSymbolByID(trac, ID)
-	if hit == 0 && err == nil {
-		return errors.New(fmt.Sprintf("invalid symbol id: %d", ID))
-	}
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
+		return err
+	}
+	if hit == 0 {
+		err = errors.NotFoundf("symbol id %d", ID)
 		return err
 	}
 
 	if err := ss.symbolRepo.TransactionDeleteSessionByID(trac, ID); err != nil {
 		trac.Rollback()
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	err = trac.Commit()
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	// delete cache.
-	deleteSymbolCacheByID(ID)
 
 	return nil
 }
@@ -574,44 +627,39 @@ func (ss *symbolOperator) DeleteSymbolByName(symbolName string) error {
 	defer trac.Close()
 
 	if err := trac.Begin(); err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	hit, err := ss.symbolRepo.TransactionDeleteByName(trac, Symbol{}, symbolName)
-	if hit == 0 && err == nil {
-		return errors.New(fmt.Sprintf("invalid symbol name: %s", symbolName))
-	}
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
+		return err
+	}
+	if hit == 0 {
+		err = errors.NotFoundf("symbol name %s", symbolName)
 		return err
 	}
 
 	if _, err := ss.symbolRepo.TransactionDeleteByName(trac, Session{}, symbolName); err != nil {
 		trac.Rollback()
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	err = trac.Commit()
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	// delete cache.
-	deleteSymbolCacheByName(symbolName)
 
 	return nil
 }
 
-func (ss *symbolOperator) GetAllSecuritySymbols() (map[string]string, error) {
-	ses, err := ss.symbolRepo.GetAllSecuritySymbols()
-	if err != nil {
-		return nil, err
-	}
-
-	if ses == nil {
-		// TODO
-	}
-
-	return ses[0], nil
+func (ss *symbolOperator) GetAllSecuritySymbols() ([]map[string]string, error) {
+	return ss.symbolRepo.GetAllSecuritySymbols()
 }
 
 func (ss *symbolOperator) GetSecuritySymbol(securityID int) ([]string, error) {
@@ -621,27 +669,31 @@ func (ss *symbolOperator) GetSecuritySymbol(securityID int) ([]string, error) {
 func (ss *symbolOperator) SetSymbolSecurity(symbolID int, securityID int) error {
 	valid, err := ss.symbolRepo.ValidSymbolID(symbolID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid symbol id: %d", symbolID))
+		err = errors.NotValidf("symbol id %d", symbolID)
+		return err
 	}
 
 	valid, err = GetSecurityOperator().ValidSecurityID(securityID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid security id: %d", securityID))
+		err = errors.NotValidf("security id: %d", securityID)
+		return err
 	}
 
 	_, err = ss.symbolRepo.UpdateSymbolSecurity(symbolID, securityID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	// set cache symbol-security.
-	setCacheSymbolSecurity(symbolID, securityID)
 
 	return nil
 }
@@ -649,32 +701,36 @@ func (ss *symbolOperator) SetSymbolSecurity(symbolID int, securityID int) error 
 func (ss *symbolOperator) UpdateSymbolSecurity(symbolID int, oldSecurityID int, newSecurityID int) error {
 	valid, err := ss.symbolRepo.ValidSymbolSecurity(symbolID, oldSecurityID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid symbolId: %d or oldSecurityID: %d", symbolID, oldSecurityID))
+		err = errors.NotFoundf("symbol id %d, security id %d", symbolID, oldSecurityID)
+		return err
 	}
 
 	valid, err = GetSecurityOperator().ValidSecurityID(newSecurityID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.New(fmt.Sprintf("invalid newSecurityID: %d", newSecurityID))
+		err = errors.NotValidf("security id %d", newSecurityID)
+		return err
 	}
 
 	_, err = ss.symbolRepo.UpdateSymbolSecurity(symbolID, newSecurityID)
 	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 
 	// set cache symbol-security.
-	setCacheSymbolSecurity(symbolID, newSecurityID)
 
 	return nil
 }
 
-func (ss *symbolOperator) GetIDByName(symbolName string) (int, error) {
+func (ss *symbolOperator) GetIDByName(symbolName string) (int, bool, error) {
 	return ss.symbolRepo.GetIDByName(symbolName)
 }
 
@@ -694,127 +750,21 @@ func (ss *symbolOperator) ValidSymbolID(symbolID int) (valid bool, err error) {
 	return ss.symbolRepo.ValidSymbolID(symbolID)
 }
 
-func (ss *symbolOperator) ValidSymbolNameID(symbolName string, symbolID int) (valid bool, err error) {
-	return ss.symbolRepo.ValidSymbolNameID(symbolName, symbolID)
-}
-
 func (ss *symbolOperator) SecurityHoldSymbols(securityID int) (hold bool, err error) {
 	return ss.symbolRepo.SecurityHoldSymbols(securityID)
 }
 
-//cache
-type symbolCache struct {
-	id2Name map[int]string
-	info    map[string]*Symbol
-	sync.RWMutex
-}
-
-var symbCache = &symbolCache{
-	id2Name: make(map[int]string),
-	info:    make(map[string]*Symbol),
-}
-
-func LoadSymbolCache() {
-	symbols := GetSymbolOperator().GetSymbols()
-	if symbols == nil {
-		panic("cache symbol failed")
+func (ss *symbolOperator) GetSymbolLeverage(symbolSource string) (symbols []string, err error) {
+	symbols, err = ss.symbolRepo.GetSymbolLeverage(symbolSource)
+	if err != nil {
+		err = errors.Annotatef(err, "sql exec")
+		return nil, err
 	}
 
-	symbCache.Lock()
-	defer symbCache.Unlock()
-
-	for i := range symbols {
-		ss, err := GetSessionOperator().GetSessionsByID(symbols[i].ID)
-		if err != nil || ss == nil {
-			panic("get session err when load symbol cache")
-		}
-		sessions, err := EncodeSession(ss)
-		if err != nil {
-			panic("encode session err when load symbol cache")
-		}
-
-		symbols[i].QuoteSession = sessions["quote"]
-		symbols[i].TradeSession = sessions["trade"]
-
-		symbCache.id2Name[symbols[i].ID] = symbols[i].Symbol
-		symbCache.info[symbols[i].Symbol] = &symbols[i]
-	}
-}
-
-func getSymbolByIDFromCache(ID int) *Symbol {
-	symbCache.RLock()
-	defer symbCache.RUnlock()
-
-	symbolName := symbCache.id2Name[ID]
-	symbol, ok := symbCache.info[symbolName]
-	if !ok {
-		return nil
-	}
-	symb := *symbol
-
-	return &symb
-}
-
-func getSymbolByNameFromCache(symbolName string) *Symbol {
-	symbCache.RLock()
-	defer symbCache.RUnlock()
-
-	symbol, ok := symbCache.info[symbolName]
-	if !ok {
-		return nil
-	}
-	symb := *symbol
-
-	return &symb
-}
-
-func getSymbolsFromCache() []Symbol {
-	symbCache.RLock()
-	defer symbCache.RUnlock()
-
-	symbs := make([]Symbol, 0)
-	for i := range symbCache.info {
-		symbs = append(symbs, *symbCache.info[i])
+	if len(symbols) == 0 {
+		err = errors.NotFoundf("source %s", symbolSource)
+		return nil, err
 	}
 
-	return symbs
-}
-
-func insertSymbolToCache(symbol *Symbol) {
-	symbCache.Lock()
-	defer symbCache.Unlock()
-
-	symbCache.id2Name[symbol.ID] = symbol.Symbol
-	symbCache.info[symbol.Symbol] = symbol
-}
-
-func deleteSymbolCacheByID(ID int) {
-	symbCache.Lock()
-	defer symbCache.Unlock()
-
-	symb := symbCache.id2Name[ID]
-	delete(symbCache.id2Name, ID)
-	delete(symbCache.info, symb)
-}
-
-func deleteSymbolCacheByName(symbolName string) {
-	symbCache.Lock()
-	defer symbCache.Unlock()
-
-	for id := range symbCache.id2Name {
-		if symbCache.id2Name[id] == symbolName {
-			delete(symbCache.id2Name, id)
-			break
-		}
-	}
-
-	delete(symbCache.info, symbolName)
-}
-
-func setCacheSymbolSecurity(symbolID int, securityID int) {
-	symbCache.Lock()
-	defer symbCache.Unlock()
-
-	symb := symbCache.id2Name[symbolID]
-	symbCache.info[symb].SecurityID = securityID
+	return symbols, nil
 }

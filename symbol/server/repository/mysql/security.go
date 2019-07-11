@@ -1,10 +1,8 @@
 package mysql
 
 import (
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"errors"
 	"import_symbol_config/symbol/server"
 )
 
@@ -24,12 +22,9 @@ func GetSecurityRepository() *securityRepository {
 	return securityRep
 }
 
-func (sr *securityRepository) GetSecurity(id int) (sec *server.Security, err error) {
+func (sr *securityRepository) GetSecurity(id int) (sec *server.Security, exist bool, err error) {
 	sec = new(server.Security)
-	hit, err := sr.engine.Table(server.Security{}).Where("id=?", id).Get(sec)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid security id: %d", id))
-	}
+	exist, err = sr.engine.Table(server.Security{}).Where("id=?", id).Get(sec)
 	return
 }
 
@@ -58,19 +53,13 @@ func (sr *securityRepository) DeleteSecurity(id int) (err error) {
 	return
 }
 
-func (sr *securityRepository) GetIDByName(securityName string) (ID int, err error) {
-	hit, err := sr.engine.Table(server.Security{}).Select("id").Where("security_name=?", securityName).Get(&ID)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid security name: %s", securityName))
-	}
+func (sr *securityRepository) GetIDByName(securityName string) (ID int, exist bool, err error) {
+	exist, err = sr.engine.Table(server.Security{}).Select("id").Where("security_name=?", securityName).Get(&ID)
 	return
 }
 
-func (sr *securityRepository) GetNameByID(ID int) (securityName string, err error) {
-	hit, err := sr.engine.Table(server.Security{}).Select("security_name").Where("id=?", ID).Get(&securityName)
-	if err == nil && !hit {
-		err = errors.New(fmt.Sprintf("invalid security id: %d", ID))
-	}
+func (sr *securityRepository) GetNameByID(ID int) (securityName string, exist bool, err error) {
+	exist, err = sr.engine.Table(server.Security{}).Select("security_name").Where("id=?", ID).Get(&securityName)
 	return
 }
 

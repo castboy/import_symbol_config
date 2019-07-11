@@ -1,8 +1,6 @@
 package mysql
 
 import (
-	"errors"
-	"fmt"
 	"github.com/go-xorm/xorm"
 	"import_symbol_config/symbol/server"
 )
@@ -41,29 +39,19 @@ func (sr *sessionRepository) GetByID(symbolID int) (sess []*server.Session, err 
 }
 
 func (sr *sessionRepository) UpdateByID(sessionID int, sess *server.Session) error {
-	_, err := sr.engine.Table(server.Session{}).Where("id=?", sessionID).Update(sess)
+	_, err := sr.engine.Table(server.Session{}).AllCols().Where("id=?", sessionID).Update(sess)
 	return err
 }
 
-func (sr *sessionRepository) DeleteByID(sessionID int) error {
-	hit, err := sr.engine.Table(server.Session{}).Where("id=?", sessionID).Delete(server.Session{})
-	if hit == 0 && err == nil {
-		return errors.New(fmt.Sprintf("invalid session id: %d", sessionID))
-	}
-
-	return err
+func (sr *sessionRepository) DeleteByID(sessionID int) (int64, error) {
+	return sr.engine.Table(server.Session{}).Where("id=?", sessionID).Delete(server.Session{})
 }
 
 func (sr *sessionRepository) ValidSessionID(sessionID int) (valid bool, err error) {
 	return sr.engine.Table(server.Session{}).Where("id=?", sessionID).Exist()
 }
 
-func (sr *sessionRepository) GetSymbolIDBySessionID(sessionID int) (symbolID int, err error) {
-	hit, err := sr.engine.Table(server.Session{}).Select("symbol_id").Where("id=?", sessionID).Get(&symbolID)
-	if !hit && err == nil {
-		err = errors.New(fmt.Sprintf("invalid session id: %d", sessionID))
-		return
-	}
-
+func (sr *sessionRepository) GetSymbolIDBySessionID(sessionID int) (symbolID int, exist bool, err error) {
+	exist, err = sr.engine.Table(server.Session{}).Select("symbol_id").Where("id=?", sessionID).Get(&symbolID)
 	return
 }
