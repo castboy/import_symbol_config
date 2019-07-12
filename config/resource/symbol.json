@@ -6,7 +6,7 @@
       "pwd": "wang1234",
       "host": "localhost",
       "port": "3306",
-      "dbname": "symbol"
+      "dbname": "symbol_test"
     },
     "decoder_config_tagname": "json",
     "holidays": [{

@@ -299,28 +299,7 @@ func importSymbols(symbols []Symbol) {
 
 func importSymbol(symbol *Symbol) error {
 	so := GetSymbolOperator()
-	err := so.InsertSymbol(symbol)
-	if err != nil {
-		return err
-	}
-
-	id, exist, err := so.GetIDByName(symbol.Symbol)
-	if err != nil {
-		return err
-	}
-
-	if !exist {
-		err = fmt.Errorf("invalid symbol name: %s", symbol.Symbol)
-		return err
-	}
-
-	symbol.ID = id
-
-	quote := DecodeSession(symbol.ID, Quote, symbol.QuoteSession)
-	trade := DecodeSession(symbol.ID, Trade, symbol.TradeSession)
-	quote = append(quote, trade...)
-
-	return GetSessionOperator().InsertSessions(quote...)
+	return so.InsertSymbol(symbol)
 }
 
 
@@ -483,7 +462,6 @@ func (ss *symbolOperator) InsertSymbol(symbol *Symbol) error {
 	//	err = errors.NewNotValid(err, "validation failed")
 	//	return err
 	//}
-
 	err := ss.symbolRepo.InsertSymbol(symbol)
 	if err != nil {
 		err = errors.Annotate(err, "sql exec")
@@ -516,7 +494,7 @@ func (ss *symbolOperator) InsertSymbol(symbol *Symbol) error {
 		}
 	}
 
-	if symbol.TradeSession == nil {
+	if symbol.TradeSession != nil {
 		trade := DecodeSession(symbol.ID, Trade, symbol.TradeSession)
 		err := ss.symbolRepo.InsertSession(trade)
 		if err != nil {
