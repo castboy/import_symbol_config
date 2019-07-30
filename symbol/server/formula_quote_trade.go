@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	SystemLeverage   = 100
+	SystemLeverage = 100
 	SymbolLeverage = 100
-	DaysInYear = 360
+	DaysInYear     = 360
 )
 
 func (symb *Symbol) MarginFormula() func(lots, marketPrice decimal.Decimal) decimal.Decimal {

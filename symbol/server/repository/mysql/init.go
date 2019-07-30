@@ -3,8 +3,8 @@ package mysql
 import (
 	"fmt"
 	"github.com/go-xorm/xorm"
-	"time"
 	"import_symbol_config/config"
+	"time"
 )
 
 var xEngine *xorm.Engine

@@ -7,11 +7,11 @@ import (
 )
 
 type Session struct {
-	ID       int    `xorm:"id"`
-	SymbolID int    `xorm:"symbol_id"`
-	Type     SessionType `xorm:"type"`
+	ID       int          `xorm:"id"`
+	SymbolID int          `xorm:"symbol_id"`
+	Type     SessionType  `xorm:"type"`
 	Weekday  time.Weekday `xorm:"weekday"`
-	TimeSpan string `xorm:"time_span"`
+	TimeSpan string       `xorm:"time_span"`
 }
 
 type SessionType int

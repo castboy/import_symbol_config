@@ -7,8 +7,8 @@
 package memory
 
 import (
-	"sync"
 	"import_symbol_config/symbol/server"
+	"sync"
 )
 
 type symbolRepository struct {

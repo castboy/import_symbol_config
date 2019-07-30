@@ -4,9 +4,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/shopspring/decimal"
 	"github.com/spf13/viper"
+	"import_symbol_config/config"
 	"reflect"
 	"time"
-	"import_symbol_config/config"
 )
 
 var iViper = config.GetConfigService("symbol")
@@ -87,4 +87,3 @@ func parseHoliday() (holidays []Holiday, err error) {
 
 	return
 }
-

@@ -24,7 +24,6 @@ type Symbol struct {
 	SymbolType    SymbolType      `json:"symbol_type" xorm:"symbol_type"`
 	SecurityID    int             `json:"security_id" xorm:"security_id"`
 	Digits        int             `json:"digits" xorm:"digits"`
-	Point         decimal.Decimal `json:"point" xorm:"point"`
 	Multiply      decimal.Decimal `json:"multiply" xorm:"multiply"`
 	ContractSize  decimal.Decimal `json:"contract_size" xorm:"contract_size"`
 	StopsLevel    int             `json:"stops_level" xorm:"stops_level"`
@@ -35,8 +34,8 @@ type Symbol struct {
 	ProfitMode     ProfitMode `json:"profit_mode" xorm:"profit_mode"`
 	ProfitCurrency string     `json:"profit_currency" xorm:"profit_currency"`
 	// margin settings
-	MarginMode     MarginMode      `json:"margin_mode" xorm:"margin_mode"`
-	MarginCurrency string          `json:"margin_currency" xorm:"margin_currency"`
+	MarginMode     MarginMode `json:"margin_mode" xorm:"margin_mode"`
+	MarginCurrency string     `json:"margin_currency" xorm:"margin_currency"`
 	// swap settings
 	SwapType     SwapType        `json:"swap_type" xorm:"swap_type"`
 	SwapLong     decimal.Decimal `json:"swap_long" xorm:"swap_long"`
@@ -205,7 +204,6 @@ func InitSymbolOperator(symbolRepo SymbolRepository) *symbolOperator {
 	return symbolOp
 }
 
-
 func (ss *symbolOperator) Start() {
 	if config.GetConfigService("symbol").GetBool("import_from_config") {
 		symbols, err := parseSymbols()
@@ -301,7 +299,6 @@ func importSymbol(symbol *Symbol) error {
 	so := GetSymbolOperator()
 	return so.InsertSymbol(symbol)
 }
-
 
 func (ss *symbolOperator) GetSymbolInfoByName(symbolName string) (symbol *Symbol) {
 	// get symbol from mysql if get symbol failed from cache.
