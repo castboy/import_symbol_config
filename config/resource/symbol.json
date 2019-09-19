@@ -2,11 +2,11 @@
   "dev": {
     "import_from_config": true,
     "mysql": {
-      "user": "root",
-      "pwd": "wang1234",
-      "host": "localhost",
+      "user": "globaldb_dev",
+      "pwd": "Mv0N7vZdBj9fD0Lo",
+      "host": "addevcon.tigerwit-inc.com",
       "port": "3306",
-      "dbname": "symbol"
+      "dbname": "trading_system"
     },
     "decoder_config_tagname": "json",
     "holidays": [{
