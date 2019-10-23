@@ -17,139 +17,17 @@ import (
 
 // Symbol represents a instance of symbol
 type Symbol struct {
-	// common settings
 	ID            int             `json:"id" xorm:"id"`
-	Symbol        string          `json:"symbol" xorm:"symbol"`
-	Source        string          `json:"source" xorm:"source"`
-	SymbolType    SymbolType      `json:"symbol_type" xorm:"symbol_type"`
+	Index         int             `json:"index" xorm:"index"`
+	Symbol        string          `json:"symbol" xorm:"Symbol"`
 	SecurityID    int             `json:"security_id" xorm:"security_id"`
-	Digits        int             `json:"digits" xorm:"digits"`
-	Multiply      decimal.Decimal `json:"multiply" xorm:"multiply"`
-	ContractSize  decimal.Decimal `json:"contract_size" xorm:"contract_size"`
-	StopsLevel    int             `json:"stops_level" xorm:"stops_level"`
+	SourceID      int             `json:"source_id" xorm:"source_id"`
 	MarginInitial decimal.Decimal `json:"margin_initial" xorm:"margin_initial"`
 	MarginDivider decimal.Decimal `json:"margin_divider" xorm:"margin_divider"`
 	Percentage    decimal.Decimal `json:"percentage" xorm:"percentage"`
-	// profit settings
-	ProfitMode     ProfitMode `json:"profit_mode" xorm:"profit_mode"`
-	ProfitCurrency string     `json:"profit_currency" xorm:"profit_currency"`
-	// margin settings
-	MarginMode     MarginMode `json:"margin_mode" xorm:"margin_mode"`
-	MarginCurrency string     `json:"margin_currency" xorm:"margin_currency"`
-	// swap settings
-	SwapType     SwapType        `json:"swap_type" xorm:"swap_type"`
-	SwapLong     decimal.Decimal `json:"swap_long" xorm:"swap_long"`
-	SwapShort    decimal.Decimal `json:"swap_short" xorm:"swap_short"`
-	Swap3Day     SwapWeekday     `json:"swap_3_day" xorm:"swap_3_day"`
-	SwapCurrency string          `josn:"swap_currency" xorm:"swap_currency"`
-	// session settings
-	QuoteSession map[time.Weekday]string `json:"quote_session" xorm:"-"`
-	TradeSession map[time.Weekday]string `json:"trade_session" xorm:"-"`
-	Index        int                     `json:"index" xorm:"index"`
+	Swap3Day      time.Weekday    `json:"swap_3_day" xorm:"swap_3_day"`
+	Source        `xorm:"-"`
 }
-
-type (
-	// ProfitMode
-	ProfitMode int
-	// SwapType
-	SwapType int
-	// SwapWeekday
-	SwapWeekday int
-	// SessionWeekday
-	SessionWeekday int
-	// MarginMode
-	MarginMode int
-	// SymbolType
-	SymbolType int
-)
-
-// ProfitForex: 0 =>(closePrice - openPrice ) * contractSize * lots
-//
-// ProfitCfd: 1 => (closePrice - openPrice ) * contractSize * lots
-//
-// ProfitFutures: 2
-const (
-	ProfitForex ProfitMode = iota
-	ProfitCfd
-	ProfitFutures
-)
-
-// ByPoints: 0 => lots * longOrShort points * pointsSize
-//
-// ByMoney: 1
-//
-// ByInterest: 2 => lots * contractSize * longOrShort points /100 /360
-//
-// ByMoneyInMarginCurrency: 3
-//
-// ByInterestOfCfds: 4 => lots * contractSize * price * longOrShort points /100 /360
-//
-// ByInterestOfFutures: 5
-const (
-	ByPoints SwapType = iota
-	ByMoney
-	ByInterest
-	ByMoneyInMarginCurrency
-	ByInterestOfCfds
-	ByInterestOfFutures
-)
-
-// SwapMonday: 0
-//
-// SwapTuesday: 1
-//
-// SwapWednesday: 2
-//
-// SwapThursday: 3
-//
-// SwapFriday: 4
-//
-// SwapSaturday: 5
-//
-// SwapSunday: 6
-const (
-	SwapMonday SwapWeekday = iota
-	SwapTuesday
-	SwapWednesday
-	SwapThursday
-	SwapFriday
-	SwapSaturday
-	SwapSunday
-)
-
-// MarginForex: 0 => lots * contractSize / leverage * percentage / 100
-//
-// MarginCfd: 1 => lots * contractSize * marketPrice * percentage / 100
-//
-// MarginFutures: 2 => lots * marginInitial * percentage / 100
-//
-// MarginCfdIndex: 3
-//
-// MarginCfdLeverage: 4 => lots * contractSize * marketPrice / leverage * percentage / 100
-const (
-	MarginForex MarginMode = iota
-	MarginCfd
-	MarginFutures
-	MarginCfdIndex
-	MarginCfdLeverage
-)
-
-// SymbolFx: 0 => Currency Pair
-//
-// SymbolMetal: 1 => Precious Metals, Gold, Silver, etc.
-//
-// SymbolEnergy: 2 => Oil or NAT GAS
-//
-// SymbolIndex: 3 => Index
-//
-// SymbolCrypto: 4 => Visual Coin
-const (
-	SymbolFx SymbolType = iota
-	SymbolMetal
-	SymbolEnergy
-	SymbolIndex
-	SymbolCrypto
-)
 
 type SymbolRepository interface {
 	GetSymbolInfoByName(symbolName string) (symbol *Symbol, exist bool, err error)
@@ -183,6 +61,7 @@ type SymbolRepository interface {
 	SecurityHoldSymbols(securityID int) (hold bool, err error)
 
 	GetSymbolLeverage(symbolSource string) (symbols []string, err error)
+	UpdateSymbolSource(symbolID, sourceID int) (err error)
 }
 
 type symbolOperator struct {
@@ -211,6 +90,12 @@ func (ss *symbolOperator) Start() {
 			//panic(err)
 		}
 		importSymbols(symbols)
+		sources, err := parseSources()
+		if err != nil {
+			panic(err)
+		}
+		importSources(sources)
+		setSymbolSource(sources)
 
 		securities, err := parseSecurity()
 		if err != nil {
@@ -225,6 +110,54 @@ func (ss *symbolOperator) Start() {
 			panic(err)
 		}
 		importHolidays(holidays)
+	}
+}
+
+func importSources(sources []Source) {
+	Len := len(sources)
+	for i := 0; i < Len; i++ {
+		err := importSource(&sources[i])
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func importSource(source *Source) error {
+	so := GetSourceOperator()
+	err := so.InsertSource(source)
+	return err
+}
+
+func setSymbolSource(sources []Source) {
+	so := GetSourceOperator()
+	for i, _ := range sources {
+		sourceID, exist, err := so.GetIDByName(sources[i].Source)
+		if err != nil {
+			panic(err)
+		}
+
+		if !exist {
+			err = fmt.Errorf("invalid security name: %s", sources[i].Source)
+			panic(err)
+		}
+
+		ss := GetSymbolOperator()
+		for j, _ := range sources[i].Symbols {
+			symbolID, exist, err := symbolOp.GetIDByName(sources[i].Symbols[j])
+			if err != nil {
+				fmt.Println(err) // TODO
+			}
+
+			if !exist {
+				err = fmt.Errorf("sdfasf")
+				panic(err)
+			}
+
+			if err := ss.SetSymbolSource(symbolID, sourceID); err != nil {
+				//fmt.Println(err) // TODO
+			}
+		}
 	}
 }
 
@@ -414,9 +347,9 @@ func (ss *symbolOperator) GetSymbols() (symbols []Symbol) {
 }
 
 func symbolFormatCheck(symbol *Symbol) error {
-	if symbol.SymbolType != SymbolFx && symbol.SymbolType != SymbolMetal && symbol.SymbolType != SymbolEnergy &&
-		symbol.SymbolType != SymbolIndex && symbol.SymbolType != SymbolCrypto {
-		return errors.NotValidf("symbol type %d", symbol.SymbolType)
+	if symbol.SourceType != SourceFx && symbol.SourceType != SourceMetal && symbol.SourceType != SourceEnergy &&
+		symbol.SourceType != SourceIndex && symbol.SourceType != SourceCrypto {
+		return errors.NotValidf("symbol type %d", symbol.SourceType)
 	}
 
 	valid, err := GetSecurityOperator().ValidSecurityID(symbol.SecurityID)
@@ -443,9 +376,7 @@ func symbolFormatCheck(symbol *Symbol) error {
 		return errors.NotValidf("swaptype %d", symbol.SwapType)
 	}
 
-	if symbol.Swap3Day != SwapMonday && symbol.Swap3Day != SwapTuesday && symbol.Swap3Day != SwapWednesday &&
-		symbol.Swap3Day != SwapThursday && symbol.Swap3Day != SwapFriday && symbol.Swap3Day != SwapSaturday &&
-		symbol.Swap3Day != SwapSunday {
+	if symbol.Swap3Day > time.Saturday || symbol.Swap3Day < time.Sunday {
 		return errors.NotValidf("swap3day: %d", symbol.Swap3Day)
 	}
 
@@ -742,4 +673,8 @@ func (ss *symbolOperator) GetSymbolLeverage(symbolSource string) (symbols []stri
 	}
 
 	return symbols, nil
+}
+
+func (ss *symbolOperator) SetSymbolSource(symbolID, sourceID int) error {
+	return ss.symbolRepo.UpdateSymbolSource(symbolID, sourceID)
 }

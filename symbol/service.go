@@ -65,19 +65,25 @@ type SecurityOperater interface {
 	DeleteSecurityInfo(id int) error
 }
 
+type SourceOperater interface {
+
+}
+
 type Operators struct {
 	SymbolOperater
 	SessionOperater
 	HolidayOperater
 	SecurityOperater
+	SourceOperater
 }
 
-func NewOperators(syo SymbolOperater, seo SessionOperater, ho HolidayOperater, se SecurityOperater) *Operators {
+func NewOperators(syo SymbolOperater, seo SessionOperater, ho HolidayOperater, se SecurityOperater, sr SourceOperater) *Operators {
 	return &Operators{
 		SymbolOperater:   syo,
 		SessionOperater:  seo,
 		HolidayOperater:  ho,
 		SecurityOperater: se,
+		SourceOperater: sr,
 	}
 }
 
@@ -95,7 +101,10 @@ func GetSymbolService() SymbolService {
 		secr := mysql.GetSecurityRepository()
 		seco := server.InitSecurityOperator(secr)
 
-		symbolService = NewOperators(syo, seo, ho, seco)
+		srcr := mysql.GetSourceRepository()
+		srco := server.InitSourceOperator(srcr)
+
+		symbolService = NewOperators(syo, seo, ho, seco, srco)
 	}
 	return symbolService
 }

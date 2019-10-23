@@ -126,3 +126,10 @@ func (sr *symbolRepository) GetSymbolLeverage(symbolSource string) (symbols []st
 	err = sr.engine.Table(server.Symbol{}).Select("symbol").Where("symbol=? or source=?", symbolSource, symbolSource).Find(&symbols)
 	return
 }
+
+func (sr *symbolRepository) UpdateSymbolSource(symbolID int, sourceID int) error {
+	symbol := new(server.Symbol)
+	symbol.SourceID = sourceID
+	_, err :=  sr.engine.Table(server.Symbol{}).Cols("source_id").Where("id=?", symbolID).Update(symbol)
+	return err
+}
