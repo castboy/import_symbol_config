@@ -71,6 +71,16 @@ func parseSymbols() (symbols []Symbol, err error) {
 	return
 }
 
+func parseSources() (sources []Source, err error) {
+	decodeHookFunc := symbolDecodeHook()
+	decodeConfigTagName := iViper.GetString("decoder_config_tagname")
+	decoderConfigOption := decodeHookWithTag(decodeHookFunc, decodeConfigTagName)
+
+	err = iViper.UnmarshalKey("sources", &sources, decoderConfigOption)
+
+	return
+}
+
 func parseSecurity() (securities []Security, err error) {
 	err = iViper.UnmarshalKey("security", &securities, func(c *mapstructure.DecoderConfig) {
 		c.TagName = decodeConfigTagName
