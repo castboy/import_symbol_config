@@ -5759,8 +5759,8 @@
       "margin_currency": "USD",
       "leverage": 100.0,
       "swap_type": 0,
-      "swap_long": -76.0602,
-      "swap_short": 50.6391,
+      "swap_long": -62.3447,
+      "swap_short": 41.4959,
       "swap_3_day": 3,
       "quote_session": {
         "0": "22:00-24:00,00:00-00:00,00:00-00:00",
@@ -5800,8 +5800,8 @@
       "margin_currency": "USD",
       "leverage": 100.0,
       "swap_type": 0,
-      "swap_long": -76.0602,
-      "swap_short": 50.6391,
+      "swap_long": -62.3447,
+      "swap_short": 41.4959,
       "swap_3_day": 3,
       "quote_session": {
         "0": "22:00-24:00,00:00-00:00,00:00-00:00",
@@ -9244,8 +9244,8 @@
       "margin_currency": "USD",
       "leverage": 100.0,
       "swap_type": 0,
-      "swap_long": -76.0602,
-      "swap_short": 50.6391,
+      "swap_long": -62.3447,
+      "swap_short": 41.4959,
       "swap_3_day": 3,
       "quote_session": {
         "0": "22:00-24:00,00:00-00:00,00:00-00:00",
