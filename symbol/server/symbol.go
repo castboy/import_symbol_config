@@ -96,6 +96,8 @@ func (ss *symbolOperator) Start() {
 		importSources(sources)
 		setSymbolSource(sources)
 
+		importSessions(sources)
+
 		securities, err := parseSecurity()
 		if err != nil {
 			panic(err)
@@ -110,6 +112,28 @@ func (ss *symbolOperator) Start() {
 		}
 		importHolidays(holidays)
 	}
+}
+
+func importSessions(sources []Source) {
+	Len := len(sources)
+	for i := 0; i < Len; i++ {
+		quote := DecodeSession(sources[i].ID, Quote, sources[i].QuoteSession)
+		err := importSession(quote)
+		if err != nil {
+			panic(err)
+		}
+		trade := DecodeSession(sources[i].ID, Trade, sources[i].TradeSession)
+		err = importSession(trade)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func importSession(sessions []*Session) error {
+	so := GetSessionOperator()
+	err := so.InsertSessions(sessions...)
+	return err
 }
 
 func importSources(sources []Source) {
