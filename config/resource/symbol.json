@@ -491,7 +491,7 @@
         ]
       }
     ],
-    "source": [{
+    "sources": [{
       "source": "EURCAD",
       "source_type": 0,
       "digits": 5,
