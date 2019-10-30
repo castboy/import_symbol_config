@@ -186,7 +186,7 @@ func EncodeSession(sess []*Session) (qt map[SessionType]map[time.Weekday]string,
 	return
 }
 
-func DecodeSession(symbolID int, sessionType SessionType, sessions map[time.Weekday]string) []*Session {
+func DecodeSession(sourceID int, sessionType SessionType, sessions map[time.Weekday]string) []*Session {
 	sess := make([]*Session, 0)
 	for weekday, se := range sessions {
 		sl := strings.Split(se, ",")
@@ -194,7 +194,7 @@ func DecodeSession(symbolID int, sessionType SessionType, sessions map[time.Week
 			if time == "00:00-00:00" {
 				continue
 			}
-			sess = append(sess, NewSession(symbolID, sessionType, weekday, time))
+			sess = append(sess, NewSession(sourceID, sessionType, weekday, time))
 		}
 	}
 
