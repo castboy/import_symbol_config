@@ -21,6 +21,7 @@ type Source struct {
 	SwapLong       decimal.Decimal         `json:"swap_long" xorm:"swap_long"`
 	SwapShort      decimal.Decimal         `json:"swap_short" xorm:"swap_short"`
 	SwapCurrency   string                  `json:"swap_currency" xorm:"swap_currency"`
+	Swap3Day       time.Weekday            `json:"swap_3_day" xorm:"swap_3_day"`
 	QuoteSession   map[time.Weekday]string `json:"quote_session" xorm:"-"`
 	TradeSession   map[time.Weekday]string `json:"trade_session" xorm:"-"`
 	Symbols        []string                `json:"symbols" xorm:"-"`

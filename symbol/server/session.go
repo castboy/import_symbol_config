@@ -8,7 +8,7 @@ import (
 
 type Session struct {
 	ID       int          `xorm:"id"`
-	SymbolID int          `xorm:"symbol_id"`
+	SourceID int          `xorm:"source_id"`
 	Type     SessionType  `xorm:"type"`
 	Weekday  time.Weekday `xorm:"weekday"`
 	TimeSpan string       `xorm:"time_span"`
@@ -21,9 +21,9 @@ const (
 	Trade
 )
 
-func NewSession(SymbolID int, Type SessionType, Weekday time.Weekday, TimeSpan string) *Session {
+func NewSession(SourceID int, Type SessionType, Weekday time.Weekday, TimeSpan string) *Session {
 	return &Session{
-		SymbolID: SymbolID,
+		SourceID: SourceID,
 		Type:     Type,
 		Weekday:  Weekday,
 		TimeSpan: TimeSpan,
@@ -60,13 +60,13 @@ func InitSessionOperator(sessionRepo SessionRepository) *sessionOperator {
 }
 
 func sessionFormatCheck(sess *Session) error {
-	valid, err := GetSymbolOperator().ValidSymbolID(sess.SymbolID)
+	valid, err := GetSymbolOperator().ValidSymbolID(sess.SourceID)
 	if err != nil {
 		err = errors.Annotatef(err, "sql exec")
 		return err
 	}
 	if !valid {
-		return errors.NotFoundf("symbol id %d", sess.SymbolID)
+		return errors.NotFoundf("source id %d", sess.SourceID)
 	}
 
 	if sess.Type != Quote && sess.Type != Trade {

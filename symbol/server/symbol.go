@@ -25,7 +25,6 @@ type Symbol struct {
 	MarginInitial decimal.Decimal `json:"margin_initial" xorm:"margin_initial"`
 	MarginDivider decimal.Decimal `json:"margin_divider" xorm:"margin_divider"`
 	Percentage    decimal.Decimal `json:"percentage" xorm:"percentage"`
-	Swap3Day      time.Weekday    `json:"swap_3_day" xorm:"swap_3_day"`
 	Source        `xorm:"-"`
 }
 
