@@ -493,6 +493,7 @@
     ],
     "sources": [{
       "source": "EURAUD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -527,6 +528,7 @@
       "symbols": ["EURAUD", "EURAUD50", "EURAUD200", "EURAUD400", "EURAUD20"]
     }, {
       "source": "EURUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -561,6 +563,7 @@
       "symbols": ["EURUSD", "EURUSD50", "EURUSD200", "EURUSD400", "EURUSD30"]
     }, {
       "source": "NZDCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -595,6 +598,7 @@
       "symbols": ["NZDCHF", "NZDCHF50", "NZDCHF200", "NZDCHF400", "NZDCHF20"]
     }, {
       "source": "USDSGD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -629,6 +633,7 @@
       "symbols": ["USDSGD20", "USDSGD200", "USDSGD"]
     }, {
       "source": "AUDJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -663,6 +668,7 @@
       "symbols": ["AUDJPY", "AUDJPY50", "AUDJPY200", "AUDJPY400", "AUDJPY20"]
     }, {
       "source": "EURGBP",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -697,6 +703,7 @@
       "symbols": ["EURGBP", "EURGBP50", "EURGBP200", "EURGBP400", "EURGBP30", "EURGBP20"]
     }, {
       "source": "USDCNH",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -731,6 +738,7 @@
       "symbols": ["USDCNH", "USDCNH50", "USDCNH200", "USDCNH400", "USDCNH20"]
     }, {
       "source": "NAS100",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -765,6 +773,7 @@
       "symbols": ["NAS100", "NAS100_200", "NASUSD", "NASUSD10", "NASUSD20"]
     }, {
       "source": "BTCUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -799,6 +808,7 @@
       "symbols": ["BTCUSD", "BTCUSD20"]
     }, {
       "source": "RPLUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -833,6 +843,7 @@
       "symbols": ["RPLUSD", "RPLUSD20"]
     }, {
       "source": "XNGUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 4,
       "multiply": 10000,
@@ -867,6 +878,7 @@
       "symbols": ["XNGUSD", "XNGUSD200", "XNGUSD10"]
     }, {
       "source": "US30",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -901,6 +913,7 @@
       "symbols": ["US30", "US30_200", "U30USD", "U30USD20"]
     }, {
       "source": "AUDSGD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -935,6 +948,7 @@
       "symbols": ["AUDSGD20", "AUDSGD200", "AUDSGD400", "AUDSGD"]
     }, {
       "source": "GBPAUD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -969,6 +983,7 @@
       "symbols": ["GBPAUD", "GBPAUD50", "GBPAUD200", "GBPAUD400", "GBPAUD20"]
     }, {
       "source": "USDJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1003,6 +1018,7 @@
       "symbols": ["USDJPY", "USDJPY50", "USDJPY200", "USDJPY400", "USDJPY30"]
     }, {
       "source": "XBRUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1037,6 +1053,7 @@
       "symbols": ["XBRUSD", "XBRUSD200", "UKOUSD", "XBRUSD10"]
     }, {
       "source": "USDTRY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1071,6 +1088,7 @@
       "symbols": ["USDTRY20", "USDTRY200", "USDTRY"]
     }, {
       "source": "ETHUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1105,6 +1123,7 @@
       "symbols": ["ETHUSD", "ETHUSD20"]
     }, {
       "source": "NZDUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1139,6 +1158,7 @@
       "symbols": ["NZDUSD", "NZDUSD50", "NZDUSD200", "NZDUSD400", "NZDUSD20"]
     }, {
       "source": "EURCAD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1173,6 +1193,7 @@
       "symbols": ["EURCAD", "EURCAD50", "EURCAD200", "EURCAD400", "EURCAD30"]
     }, {
       "source": "GBPJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1207,6 +1228,7 @@
       "symbols": ["GBPJPY", "GBPJPY50", "GBPJPY200", "GBPJPY400", "GBPJPY30", "GBPJPY20"]
     }, {
       "source": "XAUUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1241,6 +1263,7 @@
       "symbols": ["XAUUSD", "XAUUSD50", "XAUUSD200", "XAUUSD400", "XAUUSD20"]
     }, {
       "source": "USA500",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1275,6 +1298,7 @@
       "symbols": ["USA500", "USA500_200", "US500", "SPXUSD", "SPXUSD20"]
     }, {
       "source": "SPA35",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1309,6 +1333,7 @@
       "symbols": ["SPA35", "SPA35_200", "E35EUR", "E35EUR10"]
     }, {
       "source": "CADCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1343,6 +1368,7 @@
       "symbols": ["CADCHF", "CADCHF50", "CADCHF200", "CADCHF400", "CADCHF30"]
     }, {
       "source": "USDCAD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1377,6 +1403,7 @@
       "symbols": ["USDCAD", "USDCAD50", "USDCAD200", "USDCAD400", "USDCAD30"]
     }, {
       "source": "HK50",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1411,6 +1438,7 @@
       "symbols": ["HK50", "HK50_200", "H33HKD", "H33HKD10"]
     }, {
       "source": "UK100",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1445,6 +1473,7 @@
       "symbols": ["UK100", "UK100_200", "100GBP", "100GBP20"]
     }, {
       "source": "AUS200",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1479,6 +1508,7 @@
       "symbols": ["AUS200", "AUS200_200", "200AUD", "200AUD20"]
     }, {
       "source": "EURPLN",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1513,6 +1543,7 @@
       "symbols": ["EURPLN20", "EURPLN", "EURPLN200"]
     }, {
       "source": "CADJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1547,6 +1578,7 @@
       "symbols": ["CADJPY", "CADJPY50", "CADJPY200", "CADJPY400", "CADJPY30"]
     }, {
       "source": "NZDJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1581,6 +1613,7 @@
       "symbols": ["NZDJPY", "NZDJPY50", "NZDJPY200", "NZDJPY400", "NZDJPY20"]
     }, {
       "source": "USDCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1615,6 +1648,7 @@
       "symbols": ["USDCHF", "USDCHF50", "USDCHF200", "USDCHF400", "USDCHF30"]
     }, {
       "source": "GER30",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1649,6 +1683,7 @@
       "symbols": ["GER30", "GER30_200", "D30EUR", "D30EUR20"]
     }, {
       "source": "USDPLN",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1683,6 +1718,7 @@
       "symbols": ["USDPLN20", "USDPLN200", "USDPLN"]
     }, {
       "source": "AUDCAD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1717,6 +1753,7 @@
       "symbols": ["AUDCAD", "AUDCAD50", "AUDCAD200", "AUDCAD400", "AUDCAD20"]
     }, {
       "source": "USDMXN",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1751,6 +1788,7 @@
       "symbols": ["USDMXN20", "USDMXN200", "USDMXN"]
     }, {
       "source": "FRA40",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -1785,6 +1823,7 @@
       "symbols": ["FRA40", "F40EUR"]
     }, {
       "source": "AUDCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1819,6 +1858,7 @@
       "symbols": ["AUDCHF", "AUDCHF50", "AUDCHF200", "AUDCHF400", "AUDCHF20"]
     }, {
       "source": "GBPCAD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1853,6 +1893,7 @@
       "symbols": ["GBPCAD", "GBPCAD50", "GBPCAD200", "GBPCAD400", "GBPCAD20", "GBPCAD30"]
     }, {
       "source": "XTIUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1887,6 +1928,7 @@
       "symbols": ["XTIUSD", "XTIUSD200", "USOUSD", "XTIUSD10"]
     }, {
       "source": "USDHKD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1921,6 +1963,7 @@
       "symbols": ["USDHKD", "USDHKD50", "USDHKD200", "USDHKD400", "USDHKD20"]
     }, {
       "source": "LTCUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -1955,6 +1998,7 @@
       "symbols": ["LTCUSD", "LTCUSD20"]
     }, {
       "source": "GBPCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -1989,6 +2033,7 @@
       "symbols": ["GBPCHF", "GBPCHF50", "GBPCHF200", "GBPCHF400", "GBPCHF30", "GBPCHF20"]
     }, {
       "source": "AUDNZD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2023,6 +2068,7 @@
       "symbols": ["AUDNZD", "AUDNZD50", "AUDNZD200", "AUDNZD400", "AUDNZD20"]
     }, {
       "source": "CHFJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -2057,6 +2103,7 @@
       "symbols": ["CHFJPY", "CHFJPY200", "CHFJPY50", "CHFJPY400", "CHFJPY30"]
     }, {
       "source": "EURCHF",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2091,6 +2138,7 @@
       "symbols": ["EURCHF", "EURCHF50", "EURCHF200", "EURCHF400", "EURCHF30"]
     }, {
       "source": "EURJPY",
+      "source_cn": "",
       "source_type": 0,
       "digits": 3,
       "multiply": 1000,
@@ -2125,6 +2173,7 @@
       "symbols": ["EURJPY", "EURJPY50", "EURJPY200", "EURJPY400", "EURJPY30"]
     }, {
       "source": "EUSTX50",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -2159,6 +2208,7 @@
       "symbols": ["EUSTX50", "EUSTX50_200", "E50EUR", "E50EUR10", "E50EUR20"]
     }, {
       "source": "AUDUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2193,6 +2243,7 @@
       "symbols": ["AUDUSD", "AUDUSD50", "AUDUSD200", "AUDUSD400", "AUDUSD20"]
     }, {
       "source": "EURNZD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2227,6 +2278,7 @@
       "symbols": ["EURNZD", "EURNZD50", "EURNZD200", "EURNZD400", "EURNZD20"]
     }, {
       "source": "GBPUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2261,6 +2313,7 @@
       "symbols": ["GBPUSD", "GBPUSD50", "GBPUSD200", "GBPUSD400", "GBPUSD30", "GBPUSD10", "GBPUSD20"]
     }, {
       "source": "GBPNZD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
@@ -2295,6 +2348,7 @@
       "symbols": ["GBPNZD", "GBPNZD50", "GBPNZD200", "GBPNZD400", "GBPNZD20"]
     }, {
       "source": "JPN225",
+      "source_cn": "",
       "source_type": 0,
       "digits": 2,
       "multiply": 100,
@@ -2329,6 +2383,7 @@
       "symbols": ["JPN225", "JPN225_200", "225JPY", "225JPY20"]
     }, {
       "source": "XAGUSD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 4,
       "multiply": 10000,
@@ -2363,6 +2418,7 @@
       "symbols": ["XAGUSD", "XAGUSD50", "XAGUSD200", "XAGUSD400", "XAGUSD10"]
     }, {
       "source": "NZDCAD",
+      "source_cn": "",
       "source_type": 0,
       "digits": 5,
       "multiply": 100000,
