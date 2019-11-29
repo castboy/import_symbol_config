@@ -200,7 +200,6 @@
           "USDHKD50",
           "USDHKD400",
           "US500",
-          "FRA40",
           "USOUSD",
           "UKOUSD"
         ]
@@ -299,7 +298,6 @@
           "200AUD",
           "H33HKD",
           "225JPY",
-          "F40EUR",
           "E50EUR",
           "E35EUR",
           "100GBP",
@@ -1786,41 +1784,6 @@
         "6": "00:00-00:00,00:00-00:00,00:00-00:00"
       },
       "symbols": ["USDMXN20", "USDMXN200", "USDMXN"]
-    }, {
-      "source": "FRA40",
-      "source_cn": "",
-      "source_type": 0,
-      "digits": 2,
-      "multiply": 100,
-      "contract_size": 1,
-      "stops_level": 20,
-      "profit_mode": 1,
-      "profit_currency": "EUR",
-      "margin_mode": 4,
-      "margin_currency": "EUR",
-      "swap_type": 0,
-      "swap_long": -5.85,
-      "swap_short": -3.5,
-      "swap_3_day": 3,
-      "quote_session": {
-        "0": "00:00-00:00,00:00-00:00,00:00-00:00",
-        "1": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "2": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "3": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "4": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "5": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "6": "00:00-00:00,00:00-00:00,00:00-00:00"
-      },
-      "trade_session": {
-        "0": "00:00-00:00,00:00-00:00,00:00-00:00",
-        "1": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "2": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "3": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "4": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "5": "07:00-21:00,00:00-00:00,00:00-00:00",
-        "6": "00:00-00:00,00:00-00:00,00:00-00:00"
-      },
-      "symbols": ["FRA40", "F40EUR"]
     }, {
       "source": "AUDCHF",
       "source_cn": "",
@@ -3371,12 +3334,6 @@
       "margin_divider": 2,
       "percentage": 50
     }, {
-      "index": 141,
-      "symbol": "FRA40",
-      "margin_initial": 0,
-      "margin_divider": 1,
-      "percentage": 100
-    }, {
       "index": 142,
       "symbol": "AUS200",
       "margin_initial": 0,
@@ -3418,13 +3375,7 @@
       "margin_initial": 0,
       "margin_divider": 1,
       "percentage": 100
-    }, {
-      "index": 148,
-      "symbol": "F40EUR",
-      "margin_initial": 0,
-      "margin_divider": 1,
-      "percentage": 100
-    }, {
+    },{
       "index": 149,
       "symbol": "E50EUR",
       "margin_initial": 0,
