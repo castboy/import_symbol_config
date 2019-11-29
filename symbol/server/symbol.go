@@ -22,6 +22,7 @@ type Symbol struct {
 	Symbol        string          `json:"symbol" xorm:"Symbol"`
 	SecurityID    int             `json:"security_id" xorm:"security_id"`
 	SourceID      int             `json:"source_id" xorm:"source_id"`
+	SourceCN      string          `json:"source_cn" xorm:"source_cn"`
 	MarginInitial decimal.Decimal `json:"margin_initial" xorm:"margin_initial"`
 	MarginDivider decimal.Decimal `json:"margin_divider" xorm:"margin_divider"`
 	Percentage    decimal.Decimal `json:"percentage" xorm:"percentage"`
