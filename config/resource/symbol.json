@@ -737,7 +737,7 @@
     }, {
       "source": "NAS100",
       "source_cn": "纳斯达克 100",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 5,
@@ -772,7 +772,7 @@
     }, {
       "source": "BTCUSD",
       "source_cn": "比特币",
-      "source_type": 0,
+      "source_type": 4,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -807,7 +807,7 @@
     }, {
       "source": "RPLUSD",
       "source_cn": "瑞波币",
-      "source_type": 0,
+      "source_type": 4,
       "digits": 5,
       "multiply": 100000,
       "contract_size": 500,
@@ -842,7 +842,7 @@
     }, {
       "source": "XNGUSD",
       "source_cn": "天然气",
-      "source_type": 0,
+      "source_type": 2,
       "digits": 4,
       "multiply": 10000,
       "contract_size": 10000,
@@ -877,7 +877,7 @@
     }, {
       "source": "US30",
       "source_cn": "道琼斯工业指数",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1017,7 +1017,7 @@
     }, {
       "source": "XBRUSD",
       "source_cn": "布伦特原油",
-      "source_type": 0,
+      "source_type": 2,
       "digits": 3,
       "multiply": 1000,
       "contract_size": 1000,
@@ -1087,7 +1087,7 @@
     }, {
       "source": "ETHUSD",
       "source_cn": "以太坊",
-      "source_type": 0,
+      "source_type": 4,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1227,7 +1227,7 @@
     }, {
       "source": "XAUUSD",
       "source_cn": "黄金",
-      "source_type": 0,
+      "source_type": 1,
       "digits": 2,
       "multiply": 100,
       "contract_size": 100,
@@ -1262,7 +1262,7 @@
     }, {
       "source": "USA500",
       "source_cn": "标普 500",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 10,
@@ -1297,7 +1297,7 @@
     }, {
       "source": "SPA35",
       "source_cn": "西班牙股指",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1402,7 +1402,7 @@
     }, {
       "source": "HK50",
       "source_cn": "恒生指数",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 10,
@@ -1437,7 +1437,7 @@
     }, {
       "source": "UK100",
       "source_cn": "英国富时 100",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1472,7 +1472,7 @@
     }, {
       "source": "AUS200",
       "source_cn": "澳洲股指",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1647,7 +1647,7 @@
     }, {
       "source": "GER30",
       "source_cn": "德国股指",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 1,
@@ -1857,7 +1857,7 @@
     }, {
       "source": "XTIUSD",
       "source_cn": "西德州原油",
-      "source_type": 0,
+      "source_type": 2,
       "digits": 3,
       "multiply": 1000,
       "contract_size": 1000,
@@ -1927,7 +1927,7 @@
     }, {
       "source": "LTCUSD",
       "source_cn": "莱特币",
-      "source_type": 0,
+      "source_type": 4,
       "digits": 3,
       "multiply": 1000,
       "contract_size": 5,
@@ -2137,7 +2137,7 @@
     }, {
       "source": "EUSTX50",
       "source_cn": "欧元区股指",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 5,
@@ -2312,7 +2312,7 @@
     }, {
       "source": "JPN225",
       "source_cn": "日本股指",
-      "source_type": 0,
+      "source_type": 3,
       "digits": 2,
       "multiply": 100,
       "contract_size": 100,
@@ -2347,7 +2347,7 @@
     }, {
       "source": "XAGUSD",
       "source_cn": "白银",
-      "source_type": 0,
+      "source_type": 1,
       "digits": 4,
       "multiply": 10000,
       "contract_size": 5000,
