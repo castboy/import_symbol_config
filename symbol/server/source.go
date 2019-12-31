@@ -8,6 +8,7 @@ import (
 type Source struct {
 	ID             int                     `json:"id" xorm:"id pk autoincr"`
 	Source         string                  `json:"source" xorm:"source"`
+	SourceCN      string                   `json:"source_cn" xorm:"source_cn"`
 	SourceType     SourceType              `json:"source_type" xorm:"source_type"`
 	Digits         int                     `json:"digits" xorm:"digits"`
 	Multiply       decimal.Decimal         `json:"multiply" xorm:"multiply"`
