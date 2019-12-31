@@ -2,9 +2,9 @@
   "dev": {
     "import_from_config": true,
     "mysql": {
-      "user": "globaldb_dev",
-      "pwd": "Mv0N7vZdBj9fD0Lo",
-      "host": "addevcon.tigerwit-inc.com",
+      "user": "glmt4dev_wr",
+      "pwd": "mt4geed0Uokohphai1UNgeep5ae",
+      "host": "devcondb.r62g.cn",
       "port": "3306",
       "dbname": "trading_system"
     },
